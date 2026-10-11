@@ -38,7 +38,7 @@ return [
     // Make sure messages are signed
     'messages_signed' => true,
     // Define what digital algorithm you want to use
-    'digest_algorithm' => \RobRichards\XMLSecLibs\XMLSecurityDSig::SHA1,
+    'digest_algorithm' => \RobRichards\XMLSecLibs\XMLSecurityDSig::SHA256,
     // Auth Context to send with the assertion
     'authn_context' => SamlConstants::NAME_ID_FORMAT_UNSPECIFIED,
     // list of all service providers

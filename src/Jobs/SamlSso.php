@@ -8,7 +8,6 @@ use Illuminate\Support\Str;
 use LightSaml\SamlConstants;
 use LightSaml\Credential\KeyHelper;
 use LightSaml\Model\Protocol\Status;
-use LightSaml\Binding\BindingFactory;
 use LightSaml\Model\Assertion\Issuer;
 use LightSaml\Model\Assertion\NameID;
 use LightSaml\Model\Assertion\Subject;
@@ -21,12 +20,13 @@ use LightSaml\Model\Protocol\AuthnRequest;
 use Illuminate\Foundation\Bus\Dispatchable;
 use LightSaml\Model\Assertion\AuthnContext;
 use LightSaml\Model\XmlDSig\SignatureWriter;
+use RobRichards\XMLSecLibs\XMLSecurityKey;
 use LightSaml\Context\Profile\MessageContext;
 use LightSaml\Model\Assertion\AuthnStatement;
 use LightSaml\Model\Assertion\AttributeStatement;
 use LightSaml\Model\Assertion\AudienceRestriction;
 use LightSaml\Model\Assertion\SubjectConfirmation;
-use LightSaml\Model\Context\DeserializationContext;
+use LightSaml\Context\Model\DeserializationContext;
 use CodeGreenCreative\SamlIdp\Contracts\SamlContract;
 use LightSaml\Model\Assertion\SubjectConfirmationData;
 use LightSaml\Model\Assertion\EncryptedAssertionWriter;
@@ -134,7 +134,7 @@ class SamlSso implements SamlContract
         // Encrypt the assertion
 
         if ($this->encryptAssertion()) {
-            $encryptedAssertion = new EncryptedAssertionWriter;
+            $encryptedAssertion = new EncryptedAssertionWriter(XMLSecurityKey::AES128_CBC, XMLSecurityKey::RSA_OAEP_MGF1P);
             $encryptedAssertion->encrypt($assertion, KeyHelper::createPublicKey($this->getSpCertificate()));
             $this->response->addEncryptedAssertion($encryptedAssertion);
         } else {
@@ -159,7 +159,7 @@ class SamlSso implements SamlContract
      */
     public function send($binding_type)
     {
-        $bindingFactory = new BindingFactory;
+        $bindingFactory = $this->createBindingFactory();
         $postBinding = $bindingFactory->create($binding_type);
         $messageContext = new MessageContext;
         $messageContext->setMessage($this->response)->asResponse();
@@ -167,7 +167,7 @@ class SamlSso implements SamlContract
         $message->setRelayState(request('RelayState'));
         $httpResponse = $postBinding->send($messageContext);
 
-        return $httpResponse->getContent();
+        return (string) $httpResponse->getBody();
     }
 
     private function setDestination()

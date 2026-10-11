@@ -8,6 +8,7 @@ use LightSaml\Binding\BindingFactory;
 use LightSaml\Context\Profile\MessageContext;
 use LightSaml\Credential\KeyHelper;
 use LightSaml\Credential\X509Certificate;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use RobRichards\XMLSecLibs\XMLSecurityDSig;
 use RobRichards\XMLSecLibs\XMLSecurityKey;
 
@@ -28,7 +29,14 @@ trait PerformsSingleSignOn
         $this->issuer = url(config('samlidp.issuer_uri'));
         $this->certificate = $this->getCertificate();
         $this->private_key = $this->getKey();
-        $this->digest_algorithm = config('samlidp.digest_algorithm', XMLSecurityDSig::SHA1);
+        $this->digest_algorithm = config('samlidp.digest_algorithm', XMLSecurityDSig::SHA256);
+    }
+
+    protected function createBindingFactory(): BindingFactory
+    {
+        $factory = new Psr17Factory;
+
+        return new BindingFactory(null, $factory, $factory);
     }
 
     /**
@@ -41,7 +49,7 @@ trait PerformsSingleSignOn
     protected function send($binding_type, $as = 'asResponse')
     {
         // The response will be to the sls URL of the SP
-        $bindingFactory = new BindingFactory;
+        $bindingFactory = $this->createBindingFactory();
         $binding = $bindingFactory->create($binding_type);
         $messageContext = new MessageContext();
         $messageContext->setMessage($this->response)->$as();
@@ -51,7 +59,7 @@ trait PerformsSingleSignOn
         }
         $httpResponse = $binding->send($messageContext);
         // Just return the target URL for proper redirection
-        return $httpResponse->getTargetUrl();
+        return $httpResponse->getHeaderLine('Location');
     }
 
     /**
