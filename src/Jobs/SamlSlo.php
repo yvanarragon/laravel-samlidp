@@ -14,7 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use LightSaml\Model\Protocol\LogoutRequest;
 use LightSaml\Model\Protocol\LogoutResponse;
 use LightSaml\Model\XmlDSig\SignatureWriter;
-use LightSaml\Model\Context\DeserializationContext;
+use LightSaml\Context\Model\DeserializationContext;
 use CodeGreenCreative\SamlIdp\Traits\PerformsSingleSignOn;
 
 class SamlSlo
